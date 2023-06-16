@@ -12,6 +12,11 @@ class GameViewModel : ViewModel() {
         updateUi()
     }
 
+    fun onResetClick(){
+        game.reset()
+        updateUi()
+    }
+
     fun onBoardCellClick(r: Int, c: Int) {
         game.makeMove(r, c)
         updateUi()
@@ -20,7 +25,7 @@ class GameViewModel : ViewModel() {
     private fun updateUi() {
         viewState.value = ViewState(
             board = game.getBoard(),
-            turn = game.getTurn()
+            mode = game.getMode()
         )
     }
 }
@@ -28,6 +33,6 @@ class GameViewModel : ViewModel() {
 @Immutable
 data class ViewState(
     val board: List<List<CellState>>? = null,
-    val turn: CellState? = null
+    val mode: Game.Mode? = null
 )
 

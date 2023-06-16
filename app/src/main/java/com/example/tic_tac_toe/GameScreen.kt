@@ -10,8 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -20,12 +21,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,28 +36,58 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun GameScreen() {
     val vm: GameViewModel = viewModel()
     val state by vm.viewState.collectAsState()
-    val turn = state.turn ?: return
-
+    val mode = state.mode ?: return
     val board = state.board ?: return
     Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text = "Turn: ", style = MaterialTheme.typography.h2)
-            when (turn) {
-                CellState.Nought -> Nought(modifier = Modifier.size(100.dp))
-                CellState.Cross -> Cross(modifier = Modifier.size(100.dp))
-                CellState.Empty -> throw IllegalStateException()
-            }
-        }
-        GameBoard(board) { r, c -> vm.onBoardCellClick(r, c) }
+        GameHeader(mode) { vm.onResetClick() }
+        val alpha = if (mode.isFinished()) 0.5f else 1f
+        GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c -> vm.onBoardCellClick(r, c) }
     }
 }
 
 @Composable
-fun GameBoard(board: List<List<CellState>>, onElementClick: (c: Int, r: Int) -> Unit) {
+private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colors.primary)
+            .fillMaxWidth()
+            .padding(16.dp)
+            .height(100.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        when (mode) {
+            Game.Mode.CrossMove -> {
+                Text(text = "Turn of Cross", style = MaterialTheme.typography.h4)
+            }
+            Game.Mode.NoughtMove -> {
+                Text(text = "Turn of Nought", style = MaterialTheme.typography.h4)
+            }
+            Game.Mode.CrossWin -> {
+                Text(text = "Cross won", style = MaterialTheme.typography.h4)
+            }
+            Game.Mode.NoughtWin -> {
+                Text(text = "Nought won", style = MaterialTheme.typography.h4)
+            }
+            Game.Mode.Draw -> {
+                Text(text = "Draw", style = MaterialTheme.typography.h4)
+            }
+        }
+
+        if (mode.isFinished()){
+            Button(
+                onClick = { onRestartClicked() }
+            ) {
+                Text(text = "Restart", style = MaterialTheme.typography.button)
+            }
+        }
+    }
+}
+
+@Composable
+fun GameBoard(board: List<List<CellState>>, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFF0277BD))
             .aspectRatio(1f)
     ) {
         for (r in 0..2) {
@@ -99,7 +130,7 @@ fun GameCell(cellState: CellState, modifier: Modifier = Modifier) {
 
 @Composable
 private fun Cross(modifier: Modifier = Modifier) {
-    val color = MaterialTheme.colors.secondary
+    val color = Color(0xFFBF360C)
     Canvas(modifier = modifier) {
         inset(size.width / 5) {
             val strokeWidth = size.width / 5
@@ -123,7 +154,7 @@ private fun Cross(modifier: Modifier = Modifier) {
 
 @Composable
 private fun Nought(modifier: Modifier = Modifier) {
-    val color = MaterialTheme.colors.secondary
+    val color = Color(0xFF1B5E20)
     Canvas(modifier = modifier) {
         inset(size.width / 5) {
             val size: Float = size.width
@@ -141,5 +172,5 @@ fun BoardPreview() {
         listOf(CellState.Empty, CellState.Empty, CellState.Empty),
         listOf(CellState.Cross, CellState.Nought, CellState.Cross),
     )
-    GameBoard(board = board, { _, _ -> })
+    GameBoard(board = board) { _, _ -> }
 }
