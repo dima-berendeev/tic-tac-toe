@@ -2,9 +2,13 @@ package com.example.tic_tac_toe
 
 class Game {
     private val board: List<MutableList<CellState>> = getInitBoard()
-    private var turn:CellState  = CellState.Cross
+    private var turn: CellState = CellState.Cross
 
-    fun getBoard():List<List<CellState>>{
+    fun getTurn(): CellState {
+        return turn
+    }
+
+    fun getBoard(): List<List<CellState>> {
         return listOf(
             board[0].toList(),
             board[1].toList(),
@@ -12,16 +16,16 @@ class Game {
         )
     }
 
-    fun makeMove(r:Int, c:Int){
+    fun makeMove(r: Int, c: Int) {
         if (board[r][c] != CellState.Empty) return
         board[r][c] = turn
         switchTurn()
     }
 
-    private fun switchTurn(){
-        turn = if (turn == CellState.Cross){
+    private fun switchTurn() {
+        turn = if (turn == CellState.Cross) {
             CellState.Nought
-        }else{
+        } else {
             CellState.Cross
         }
     }
