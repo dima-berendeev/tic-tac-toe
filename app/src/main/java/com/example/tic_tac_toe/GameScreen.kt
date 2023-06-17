@@ -72,7 +72,7 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
             }
         }
 
-        if (mode.isFinished()){
+        if (mode.isFinished()) {
             Button(
                 onClick = { onRestartClicked() }
             ) {
@@ -83,7 +83,7 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
 }
 
 @Composable
-fun GameBoard(board: List<List<CellState>>, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
+fun GameBoard(board: List<List<PlayerType?>>, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -112,16 +112,13 @@ fun GameBoard(board: List<List<CellState>>, modifier: Modifier = Modifier, onEle
 }
 
 @Composable
-fun GameCell(cellState: CellState, modifier: Modifier = Modifier) {
+fun GameCell(cellState: PlayerType?, modifier: Modifier = Modifier) {
     Box(modifier) {
         when (cellState) {
-            CellState.Nought -> {
-                Nought(Modifier.fillMaxSize())
-            }
-            CellState.Cross -> {
-                Cross(Modifier.fillMaxSize())
-            }
-            CellState.Empty -> {
+
+            PlayerType.Cross -> Cross(Modifier.fillMaxSize())
+            PlayerType.Nought -> Nought(Modifier.fillMaxSize())
+            null -> {
                 //do nothing
             }
         }
@@ -168,9 +165,9 @@ private fun Nought(modifier: Modifier = Modifier) {
 @Composable
 fun BoardPreview() {
     val board = listOf(
-        listOf(CellState.Cross, CellState.Nought, CellState.Empty),
-        listOf(CellState.Empty, CellState.Empty, CellState.Empty),
-        listOf(CellState.Cross, CellState.Nought, CellState.Cross),
+        listOf(PlayerType.Cross, PlayerType.Nought, null),
+        listOf(null, null, null),
+        listOf(PlayerType.Cross, PlayerType.Nought, PlayerType.Cross),
     )
     GameBoard(board = board) { _, _ -> }
 }

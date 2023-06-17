@@ -19,20 +19,22 @@ class GameViewModel : ViewModel() {
 
     fun onBoardCellClick(r: Int, c: Int) {
         game.makeMove(r, c)
+        game.makeMoveAutomatically()
         updateUi()
     }
 
     private fun updateUi() {
         viewState.value = ViewState(
-            board = game.getBoard(),
+            board = game.getBoardSnapshot(),
             mode = game.getMode()
         )
+
     }
 }
 
 @Immutable
 data class ViewState(
-    val board: List<List<CellState>>? = null,
+    val board: List<List<PlayerType?>>? = null,
     val mode: Game.Mode? = null
 )
 
