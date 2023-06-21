@@ -4,11 +4,6 @@ class OptimalMoveCalculator(private val board: Board, private val player: Player
     fun findOptimalMove(): Result? {
         var lastPlayerResult: PlayerResult? = null
         var result: Result? = null
-        val rr = MutableList(board.size){
-            MutableList<PlayerResult?>(board.size){
-                null
-            }
-        }
         for (r in 0 until board.size) {
             for (c in 0 until board.size) {
                 if (!board.isEmpty(r, c)) continue
@@ -18,7 +13,6 @@ class OptimalMoveCalculator(private val board: Board, private val player: Player
                     lastPlayerResult = playerResult
                     result = Result(r, c)
                 }
-                rr[r][c] = playerResult
                 board.clearCell(r, c)
             }
         }

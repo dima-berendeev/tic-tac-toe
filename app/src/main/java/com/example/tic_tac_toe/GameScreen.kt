@@ -40,8 +40,12 @@ fun GameScreen() {
     val board = state.board ?: return
     Column {
         GameHeader(mode) { vm.onResetClick() }
-        val alpha = if (mode.isFinished()) 0.5f else 1f
-        GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c -> vm.onBoardCellClick(r, c) }
+        val alpha = if (state.isFinished()) 0.5f else 1f
+        GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c ->
+            if (mode is Game.Mode.Move) {
+                mode.deferredMove.complete(Game.Coordinates(r, c))
+            }
+        }
     }
 }
 
@@ -55,24 +59,32 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         when (mode) {
-            Game.Mode.CrossMove -> {
-                Text(text = "Turn of Cross", style = MaterialTheme.typography.h4)
-            }
-            Game.Mode.NoughtMove -> {
-                Text(text = "Turn of Nought", style = MaterialTheme.typography.h4)
-            }
-            Game.Mode.CrossWin -> {
-                Text(text = "Cross won", style = MaterialTheme.typography.h4)
-            }
-            Game.Mode.NoughtWin -> {
-                Text(text = "Nought won", style = MaterialTheme.typography.h4)
+            is Game.Mode.Move -> {
+                when (mode.playerType) {
+                    PlayerType.Cross -> {
+                        Text(text = "Turn of Cross", style = MaterialTheme.typography.h4)
+                    }
+                    PlayerType.Nought -> {
+                        Text(text = "Turn of Nought", style = MaterialTheme.typography.h4)
+                    }
+                }
             }
             Game.Mode.Draw -> {
                 Text(text = "Draw", style = MaterialTheme.typography.h4)
             }
+            is Game.Mode.Win -> {
+                when (mode.player) {
+                    PlayerType.Cross -> {
+                        Text(text = "Cross won", style = MaterialTheme.typography.h4)
+                    }
+                    PlayerType.Nought -> {
+                        Text(text = "Nought won", style = MaterialTheme.typography.h4)
+                    }
+                }
+            }
         }
 
-        if (mode.isFinished()) {
+        if (mode !is Game.Mode.Move) {
             Button(
                 onClick = { onRestartClicked() }
             ) {
@@ -83,7 +95,7 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
 }
 
 @Composable
-fun GameBoard(board: List<List<PlayerType?>>, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
+fun GameBoard(board: Board.Snapshot, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -94,7 +106,7 @@ fun GameBoard(board: List<List<PlayerType?>>, modifier: Modifier = Modifier, onE
             Row {
                 for (c in 0..2) {
                     GameCell(
-                        board[r][c],
+                        board.getCellPlayer(r, c),
                         modifier = Modifier
                             .fillMaxWidth(1f / (3 - c))
                             .aspectRatio(1f)
@@ -164,10 +176,19 @@ private fun Nought(modifier: Modifier = Modifier) {
 @Preview
 @Composable
 fun BoardPreview() {
-    val board = listOf(
+    val content = listOf(
         listOf(PlayerType.Cross, PlayerType.Nought, null),
         listOf(null, null, null),
         listOf(PlayerType.Cross, PlayerType.Nought, PlayerType.Cross),
     )
+
+    val board = object : Board.Snapshot {
+        override val size = 3
+
+        override fun getCellPlayer(row: Int, col: Int): PlayerType? {
+            return content[row][col]
+        }
+
+    }
     GameBoard(board = board) { _, _ -> }
 }

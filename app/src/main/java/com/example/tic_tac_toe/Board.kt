@@ -1,62 +1,61 @@
 package com.example.tic_tac_toe
 
-@JvmInline
-value class Row(val asInt: Int)
+import androidx.compose.runtime.Immutable
 
-@JvmInline
-value class Column(val asInt: Int)
+class Board(val size: Int) {
+    private val content: List<MutableList<PlayerType?>> = createEmptyContent()
 
-class Board {
-    var size: Int
-    private val rows: List<MutableList<PlayerType?>>
-
-    constructor(size: Int) {
-        this.size = size
-        rows = (1..size).map { MutableList(size) { null } }
+    constructor(snapshot: Board.Snapshot) : this(snapshot.size) {
+        for (row in 0 until snapshot.size) {
+            for (col in 0 until snapshot.size) {
+                content[row][col] = snapshot.getCellPlayer(row, col)
+            }
+        }
     }
 
-    private constructor(size: Int, rows: List<MutableList<PlayerType?>>) {
-        this.size = size
-        this.rows = rows
+    fun getCellPlayer(row: Int, col: Int): PlayerType? {
+        return content[row][col]
     }
 
-    fun getCellPlayer(r: Int, c: Int): PlayerType? {
-        return rows[r][c]
+    fun putCellPlayer(row: Int, col: Int, playerType: PlayerType) {
+        if (content[row][col] != playerType) {
+            content[row][col] = playerType
+        }
     }
 
-    fun putCellPlayer(r: Int, c: Int, playerType: PlayerType) {
-        rows[r][c] = playerType
+    fun clearCell(row: Int, col: Int) {
+        content[row][col] = null
     }
 
-    fun clearCell(r: Int, c: Int) {
-        rows[r][c] = null
+    fun isEmpty(row: Int, col: Int): Boolean {
+        return content[row][col] == null
     }
 
-    fun isEmpty(r: Int, c: Int): Boolean {
-        return rows[r][c] == null
-    }
 
-    fun createCopy(): Board {
-        val rowsCopy = rows.map { mutableListOf<PlayerType?>().apply { addAll(it) } }
-        return Board(size, rowsCopy)
+    fun createBoardSnapshot(): Snapshot {
+        val content = List(size) { row ->
+            List(size) { col ->
+                content[row][col]
+            }
+        }
+        return SnapshotImpl(size, content)
     }
-
 
     fun isWin(): Boolean {
         for (r in 0..2) {
-            if (rows[r][0] != null && rows[r][0] == rows[r][1] && rows[r][0] == rows[r][2]) {
+            if (content[r][0] != null && content[r][0] == content[r][1] && content[r][0] == content[r][2]) {
                 return true
             }
         }
         for (c in 0..2) {
-            if (rows[0][c] != null && rows[0][c] == rows[1][c] && rows[0][c] == rows[2][c]) {
+            if (content[0][c] != null && content[0][c] == content[1][c] && content[0][c] == content[2][c]) {
                 return true
             }
         }
-        if (rows[0][0] != null && rows[0][0] == rows[1][1] && rows[1][1] == rows[2][2]) {
+        if (content[0][0] != null && content[0][0] == content[1][1] && content[1][1] == content[2][2]) {
             return true
         }
-        if (rows[0][2] != null && rows[0][2] == rows[1][1] && rows[1][1] == rows[2][0]) {
+        if (content[0][2] != null && content[0][2] == content[1][1] && content[1][1] == content[2][0]) {
             return true
         }
         return false
@@ -65,13 +64,27 @@ class Board {
     fun isDraw(): Boolean {
         for (r in 0..2) {
             for (c in 0..2) {
-                if (rows[r][c] == null) return false
+                if (content[r][c] == null) return false
             }
         }
         return true
     }
 
+    private fun createEmptyContent(): List<MutableList<PlayerType?>> = (1..size).map { MutableList(size) { null } }
+
     override fun toString(): String {
-        return "Board(rows=$rows)"
+        return "Board(rows=$content)"
+    }
+
+    @Immutable
+    interface Snapshot {
+        val size: Int
+        fun getCellPlayer(row: Int, col: Int): PlayerType?
+    }
+
+    private class SnapshotImpl(override val size: Int, val content: List<List<PlayerType?>>) : Snapshot {
+        override fun getCellPlayer(row: Int, col: Int): PlayerType? {
+            return content[row][col]
+        }
     }
 }
