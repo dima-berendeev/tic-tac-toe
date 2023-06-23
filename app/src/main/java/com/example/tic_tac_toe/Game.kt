@@ -1,51 +1,34 @@
 package com.example.tic_tac_toe
 
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 class Game(private val board: Board) {
-    val stateFlow = MutableStateFlow<State?>(null)
-    private var scope = MainScope()
 
-    fun start() {
-        launchMainCycle()
-    }
+    fun launch(): Flow<State> = flow {
+        var playerType = PlayerType.Cross
+        var winner: PlayerType? = null
+        var isGameDraw = false
+        while (winner == null && !isGameDraw) {
+            when {
+                board.isWin() -> {
+                    winner = playerType.other
+                    emit(State(board.createBoardSnapshot(), Mode.Win(winner)))
+                }
+                board.isDraw() -> {
+                    isGameDraw = true
+                    emit(State(board.createBoardSnapshot(), Mode.Draw))
+                }
+                else -> {
+                    val deferredMove = CompletableDeferred<Coordinates>()
 
-    fun stop() {
-        scope.cancel()
-        scope = MainScope()
-        launchMainCycle()
-    }
+                    emit(State(board.createBoardSnapshot(), Mode.Move(playerType, deferredMove)))
+                    val move = deferredMove.await()
 
-    private fun launchMainCycle() {
-        scope.launch {
-            var playerType = PlayerType.Cross
-            var winner: PlayerType? = null
-            var isGameDraw = false
-            while (isActive && winner == null && !isGameDraw) {
-                when {
-                    board.isWin() -> {
-                        winner = playerType.other
-                        stateFlow.value = State(board.createBoardSnapshot(), Mode.Win(winner))
-                    }
-                    board.isDraw() -> {
-                        isGameDraw = true
-                        stateFlow.value = State(board.createBoardSnapshot(), Mode.Draw)
-                    }
-                    else -> {
-                        val deferredMove = CompletableDeferred<Coordinates>()
-
-                        stateFlow.value = State(board.createBoardSnapshot(), Mode.Move(playerType, deferredMove))
-                        val move = deferredMove.await()
-
-                        if (board.isEmpty(move.row, move.col)) {
-                            board.putCellPlayer(move.row, move.col, playerType)
-                            playerType = playerType.other
-                        }
+                    if (board.isEmpty(move.row, move.col)) {
+                        board.putCellPlayer(move.row, move.col, playerType)
+                        playerType = playerType.other
                     }
                 }
             }
