@@ -82,10 +82,7 @@ fun Board.getSnapshot(): BoardSnapshot {
     return BoardSnapshotImpl(size, content)
 }
 
-interface BoardSnapshot {
-    val size: Int
-    fun getCellPlayer(row: Int, col: Int): PlayerType?
-}
+
 
 @Immutable
 private class BoardSnapshotImpl constructor(override val size: Int, private val content: List<List<PlayerType?>>) : BoardSnapshot {

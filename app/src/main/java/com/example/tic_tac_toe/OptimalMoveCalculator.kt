@@ -38,11 +38,11 @@ class OptimalMoveCalculator(private val board: Board, private val player: Player
     data class Result(val row: Int, val column: Int)
 }
 
-enum class PlayerResult {
+private enum class PlayerResult {
     Win, Draw, Loss;
 }
 
-operator fun PlayerResult.not(): PlayerResult {
+private operator fun PlayerResult.not(): PlayerResult {
     return when (this) {
         PlayerResult.Win -> PlayerResult.Loss
         PlayerResult.Draw -> PlayerResult.Draw
@@ -50,20 +50,10 @@ operator fun PlayerResult.not(): PlayerResult {
     }
 }
 
-fun PlayerResult?.best(other: PlayerResult): PlayerResult {
+private fun PlayerResult?.best(other: PlayerResult): PlayerResult {
     return if (this == null || other < this) {
         other
     } else {
         this
     }
 }
-
-enum class PlayerType {
-    Cross, Nought
-}
-
-val PlayerType.other
-    get() = when (this) {
-        PlayerType.Cross -> PlayerType.Nought
-        PlayerType.Nought -> PlayerType.Cross
-    }
