@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
+import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -36,13 +37,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun GameScreen() {
     val vm: GameViewModel = viewModel()
     val state by vm.viewState.collectAsState()
-    val mode = state.mode ?: return
+    val mode = state.roundState ?: return
     val board = state.boardSnapshot ?: return
     Column {
         GameHeader(mode)
-        val alpha = if (state.mode is ViewState.Finished) 0.5f else 1f
+        val alpha = if (state.roundState is RoundUiState.Finished) 0.5f else 1f
         GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c ->
-            if (mode is ViewState.RealPlayerMove) {
+            if (mode is RoundUiState.RealPlayerMove) {
                 mode.playerMoveAction(PlayerMove(r, c))
             }
         }
@@ -50,7 +51,7 @@ fun GameScreen() {
 }
 
 @Composable
-private fun GameHeader(mode: ViewState.Mode) {
+private fun GameHeader(roundState: RoundUiState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -58,21 +59,22 @@ private fun GameHeader(mode: ViewState.Mode) {
             .height(100.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        when (mode) {
-            is ViewState.AutoPlayerMove -> {
+        when (roundState) {
+            is RoundUiState.AutoPlayerMove -> {
                 Text(text = "Computer's move", style = MaterialTheme.typography.h4)
+                LinearProgressIndicator(progress = roundState.progress)
             }
-            is ViewState.RealPlayerMove -> {
+            is RoundUiState.RealPlayerMove -> {
                 Text(text = "Your move", style = MaterialTheme.typography.h4)
             }
-            is ViewState.Finished -> {
-                when (mode.playerType) {
+            is RoundUiState.Finished -> {
+                when (roundState.playerType) {
                     PlayerType.Cross -> Text(text = "Cross won", style = MaterialTheme.typography.h4)
                     PlayerType.Nought -> Text(text = "Nought won", style = MaterialTheme.typography.h4)
                     null -> Text(text = "Draw", style = MaterialTheme.typography.h4)
                 }
                 Button(
-                    onClick = { mode.nextRoundAction() }
+                    onClick = { roundState.nextRoundAction() }
                 ) {
                     Text(text = "Next round", style = MaterialTheme.typography.button)
                 }
