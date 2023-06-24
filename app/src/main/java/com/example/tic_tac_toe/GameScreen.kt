@@ -37,7 +37,7 @@ fun GameScreen() {
     val vm: GameViewModel = viewModel()
     val state by vm.viewState.collectAsState()
     val mode = state.mode ?: return
-    val board = state.board ?: return
+    val board = state.boardSnapshot ?: return
     Column {
         GameHeader(mode) { vm.onResetClick() }
         val alpha = if (state.isFinished()) 0.5f else 1f
@@ -95,7 +95,7 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
 }
 
 @Composable
-fun GameBoard(board: Board.Snapshot, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
+fun GameBoard(board: ImmutableBoard, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -176,19 +176,11 @@ private fun Nought(modifier: Modifier = Modifier) {
 @Preview
 @Composable
 fun BoardPreview() {
-    val content = listOf(
-        listOf(PlayerType.Cross, PlayerType.Nought, null),
-        listOf(null, null, null),
-        listOf(PlayerType.Cross, PlayerType.Nought, PlayerType.Cross),
+    val content: MutableList<MutableList<PlayerType?>> = mutableListOf(
+        mutableListOf(PlayerType.Cross, PlayerType.Nought, null),
+        mutableListOf(null, null, null),
+        mutableListOf(PlayerType.Cross, PlayerType.Nought, PlayerType.Cross),
     )
-
-    val board = object : Board.Snapshot {
-        override val size = 3
-
-        override fun getCellPlayer(row: Int, col: Int): PlayerType? {
-            return content[row][col]
-        }
-
-    }
+    val board = MutableBoard(3,content).createImmutableCopy()
     GameBoard(board = board) { _, _ -> }
 }

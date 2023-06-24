@@ -2,89 +2,120 @@ package com.example.tic_tac_toe
 
 import androidx.compose.runtime.Immutable
 
-class Board(val size: Int) {
-    private val content: List<MutableList<PlayerType?>> = createEmptyContent()
-
-    constructor(snapshot: Board.Snapshot) : this(snapshot.size) {
-        for (row in 0 until snapshot.size) {
-            for (col in 0 until snapshot.size) {
-                content[row][col] = snapshot.getCellPlayer(row, col)
-            }
-        }
-    }
-
-    fun getCellPlayer(row: Int, col: Int): PlayerType? {
-        return content[row][col]
-    }
-
-    fun putCellPlayer(row: Int, col: Int, playerType: PlayerType) {
-        if (content[row][col] != playerType) {
-            content[row][col] = playerType
-        }
-    }
-
-    fun clearCell(row: Int, col: Int) {
-        content[row][col] = null
-    }
+interface Board {
+    val size: Int
+    fun getCellPlayer(row: Int, col: Int): PlayerType?
 
     fun isEmpty(row: Int, col: Int): Boolean {
-        return content[row][col] == null
-    }
-
-
-    fun createBoardSnapshot(): Snapshot {
-        val content = List(size) { row ->
-            List(size) { col ->
-                content[row][col]
-            }
-        }
-        return SnapshotImpl(size, content)
+        return getCellPlayer(row, col) == null
     }
 
     fun isWin(): Boolean {
-        for (r in 0..2) {
-            if (content[r][0] != null && content[r][0] == content[r][1] && content[r][0] == content[r][2]) {
-                return true
+        for (r in 0 until size) {
+            var rowWin = true
+            for (c in 1 until size) {
+                if (getCellPlayer(r, c) == null || getCellPlayer(r, c) != getCellPlayer(r, c - 1)) {
+                    rowWin = false
+                }
+            }
+            if (rowWin) return true
+        }
+        for (c in 0 until size) {
+            var colWin = true
+            for (r in 1 until size) {
+                if (getCellPlayer(r, c) == null || getCellPlayer(r, c) != getCellPlayer(r - 1, c)) {
+                    colWin = false
+                }
+            }
+            if (colWin) return true
+        }
+        var mainDiagonalWin = true
+        var secondaryDiagonalWin = true
+        for (i in 1 until size) {
+            if (getCellPlayer(i, i) == null || getCellPlayer(i, i) != getCellPlayer(i - 1, i - 1)) {
+                mainDiagonalWin = false
+            }
+            if (
+                getCellPlayer(i, size - 1 - i) == null ||
+                getCellPlayer(i, size - 1 - i) != getCellPlayer(i - 1, size - i)
+            ) {
+                secondaryDiagonalWin = false
             }
         }
-        for (c in 0..2) {
-            if (content[0][c] != null && content[0][c] == content[1][c] && content[0][c] == content[2][c]) {
-                return true
-            }
-        }
-        if (content[0][0] != null && content[0][0] == content[1][1] && content[1][1] == content[2][2]) {
-            return true
-        }
-        if (content[0][2] != null && content[0][2] == content[1][1] && content[1][1] == content[2][0]) {
-            return true
-        }
-        return false
+
+        return mainDiagonalWin || secondaryDiagonalWin
     }
 
     fun isDraw(): Boolean {
         for (r in 0..2) {
             for (c in 0..2) {
-                if (content[r][c] == null) return false
+                if (getCellPlayer(r, c) == null) return false
             }
         }
         return true
     }
 
-    private fun createEmptyContent(): List<MutableList<PlayerType?>> = (1..size).map { MutableList(size) { null } }
+}
 
-    override fun toString(): String {
-        return "Board(rows=$content)"
-    }
 
-    @Immutable
-    interface Snapshot {
-        val size: Int
-        fun getCellPlayer(row: Int, col: Int): PlayerType?
-    }
+@Immutable
+interface ImmutableBoard : Board
 
-    private class SnapshotImpl(override val size: Int, val content: List<List<PlayerType?>>) : Snapshot {
+interface MutableBoard : Board {
+    fun putCellPlayer(row: Int, col: Int, playerType: PlayerType)
+    fun clearCell(row: Int, col: Int)
+}
+
+fun Board.createImmutableCopy(): ImmutableBoard {
+    val content = List(size) { row -> List(size) { col -> getCellPlayer(row, col) } }
+    val size = size
+    return object : ImmutableBoard {
+        override val size = size
+
         override fun getCellPlayer(row: Int, col: Int): PlayerType? {
             return content[row][col]
+        }
+
+
+        override fun toString(): String {
+            return "Board(rows=$content)"
+        }
+    }
+}
+
+fun Board.createMutableCopy(): MutableBoard {
+    val content = MutableList(size) { row -> MutableList(size) { col -> getCellPlayer(row, col) } }
+    return MutableBoard(size, content)
+}
+
+fun MutableBoard(
+    size: Int,
+    content: MutableList<MutableList<PlayerType?>> = createMutableEmptyContent(size)
+): MutableBoard {
+    return object : MutableBoard {
+
+        override val size = size
+
+        override fun getCellPlayer(row: Int, col: Int): PlayerType? {
+            return content[row][col]
+        }
+
+        override fun putCellPlayer(row: Int, col: Int, playerType: PlayerType) {
+            if (content[row][col] != playerType) {
+                content[row][col] = playerType
+            }
+        }
+
+        override fun clearCell(row: Int, col: Int) {
+            content[row][col] = null
+        }
+    }
+}
+
+private fun createMutableEmptyContent(size: Int): MutableList<MutableList<PlayerType?>> {
+    return MutableList(size) {
+        MutableList(size) {
+            null
         }
     }
 }
