@@ -36,8 +36,8 @@ class GameViewModel : ViewModel() {
                         ViewState.RealPlayerMove(gameState.mode.playerType, playerMoveAction)
                     }
                 }
-                Game.Mode.Draw -> ViewState.Draw
-                is Game.Mode.Win -> ViewState.Win(gameState.mode.playerType)
+                is Game.Mode.Draw -> ViewState.Finished(null)
+                is Game.Mode.Win -> ViewState.Finished(gameState.mode.playerType)
             }
             viewState.value = (ViewState(boardSnapshot, viewStateMode))
 
@@ -60,15 +60,11 @@ data class ViewState(
     val boardSnapshot: BoardSnapshot? = null,
     val mode: Mode? = null
 ) {
-    fun isFinished(): Boolean {
-        return mode is Win || mode is Draw
-    }
 
     sealed interface Mode
     data class AutoPlayerMove(val playerType: PlayerType) : Mode
     data class RealPlayerMove(val playerType: PlayerType, val playerMoveAction: (PlayerMove) -> Unit) : Mode
-    data class Win(val playerType: PlayerType) : Mode
-    object Draw : Mode
+    data class Finished(val playerType: PlayerType?) : Mode
 }
 
 class GameFactory {

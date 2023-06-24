@@ -40,7 +40,7 @@ fun GameScreen() {
     val board = state.boardSnapshot ?: return
     Column {
         GameHeader(mode) { vm.onResetClick() }
-        val alpha = if (state.isFinished()) 0.5f else 1f
+        val alpha = if (state.mode is ViewState.Finished) 0.5f else 1f
         GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c ->
             if (mode is ViewState.RealPlayerMove) {
                 mode.playerMoveAction(PlayerMove(r,c))
@@ -79,17 +79,11 @@ private fun GameHeader(mode: ViewState.Mode, onRestartClicked: () -> Unit) {
                     }
                 }
             }
-            ViewState.Draw -> {
-                Text(text = "Draw", style = MaterialTheme.typography.h4)
-            }
-            is ViewState.Win -> {
-                when (mode.playerType) {
-                    PlayerType.Cross -> {
-                        Text(text = "Cross won", style = MaterialTheme.typography.h4)
-                    }
-                    PlayerType.Nought -> {
-                        Text(text = "Nought won", style = MaterialTheme.typography.h4)
-                    }
+            is ViewState.Finished -> {
+                when(mode.playerType){
+                    PlayerType.Cross -> Text(text = "Cross won", style = MaterialTheme.typography.h4)
+                    PlayerType.Nought -> Text(text = "Nought won", style = MaterialTheme.typography.h4)
+                    null -> Text(text = "Draw", style = MaterialTheme.typography.h4)
                 }
             }
         }
