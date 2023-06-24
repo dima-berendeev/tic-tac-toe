@@ -43,7 +43,7 @@ class Game(private val boardProvider: () -> Board) {
 
     sealed interface Mode {
         data class Move(val playerType: PlayerType, val moveAction: (PlayerMove) -> Unit) : Mode
-        data class Win(val player: PlayerType) : Mode
+        data class Win(val playerType: PlayerType) : Mode
         object Draw : Mode
     }
 }

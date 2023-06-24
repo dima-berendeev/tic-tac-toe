@@ -42,15 +42,15 @@ fun GameScreen() {
         GameHeader(mode) { vm.onResetClick() }
         val alpha = if (state.isFinished()) 0.5f else 1f
         GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c ->
-            if (mode is Game.Mode.Move) {
-                mode.moveAction(PlayerMove(r, c))
+            if (mode is ViewState.RealPlayerMove) {
+                mode.playerMoveAction(PlayerMove(r,c))
             }
         }
     }
 }
 
 @Composable
-private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
+private fun GameHeader(mode: ViewState.Mode, onRestartClicked: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -59,7 +59,7 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         when (mode) {
-            is Game.Mode.Move -> {
+            is ViewState.AutoPlayerMove -> {
                 when (mode.playerType) {
                     PlayerType.Cross -> {
                         Text(text = "Turn of Cross", style = MaterialTheme.typography.h4)
@@ -69,11 +69,21 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
                     }
                 }
             }
-            Game.Mode.Draw -> {
+            is ViewState.RealPlayerMove -> {
+                when (mode.playerType) {
+                    PlayerType.Cross -> {
+                        Text(text = "Turn of Cross", style = MaterialTheme.typography.h4)
+                    }
+                    PlayerType.Nought -> {
+                        Text(text = "Turn of Nought", style = MaterialTheme.typography.h4)
+                    }
+                }
+            }
+            ViewState.Draw -> {
                 Text(text = "Draw", style = MaterialTheme.typography.h4)
             }
-            is Game.Mode.Win -> {
-                when (mode.player) {
+            is ViewState.Win -> {
+                when (mode.playerType) {
                     PlayerType.Cross -> {
                         Text(text = "Cross won", style = MaterialTheme.typography.h4)
                     }
@@ -84,13 +94,13 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
             }
         }
 
-        if (mode !is Game.Mode.Move) {
-            Button(
-                onClick = { onRestartClicked() }
-            ) {
-                Text(text = "Restart", style = MaterialTheme.typography.button)
-            }
-        }
+//        if (mode !is Game.Mode.Move) {
+//            Button(
+//                onClick = { onRestartClicked() }
+//            ) {
+//                Text(text = "Restart", style = MaterialTheme.typography.button)
+//            }
+//        }
     }
 }
 
