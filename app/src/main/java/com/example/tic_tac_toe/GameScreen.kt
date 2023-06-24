@@ -39,7 +39,7 @@ fun GameScreen() {
     val mode = state.mode ?: return
     val board = state.boardSnapshot ?: return
     Column {
-        GameHeader(mode) { vm.onResetClick() }
+        GameHeader(mode)
         val alpha = if (state.mode is ViewState.Finished) 0.5f else 1f
         GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c ->
             if (mode is ViewState.RealPlayerMove) {
@@ -50,7 +50,7 @@ fun GameScreen() {
 }
 
 @Composable
-private fun GameHeader(mode: ViewState.Mode, onRestartClicked: () -> Unit) {
+private fun GameHeader(mode: ViewState.Mode) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -85,16 +85,13 @@ private fun GameHeader(mode: ViewState.Mode, onRestartClicked: () -> Unit) {
                     PlayerType.Nought -> Text(text = "Nought won", style = MaterialTheme.typography.h4)
                     null -> Text(text = "Draw", style = MaterialTheme.typography.h4)
                 }
+                Button(
+                    onClick = { mode.restartAction() }
+                ) {
+                    Text(text = "Restart", style = MaterialTheme.typography.button)
+                }
             }
         }
-
-//        if (mode !is Game.Mode.Move) {
-//            Button(
-//                onClick = { onRestartClicked() }
-//            ) {
-//                Text(text = "Restart", style = MaterialTheme.typography.button)
-//            }
-//        }
     }
 }
 
