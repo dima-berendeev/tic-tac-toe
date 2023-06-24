@@ -43,7 +43,7 @@ fun GameScreen() {
         val alpha = if (state.isFinished()) 0.5f else 1f
         GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c ->
             if (mode is Game.Mode.Move) {
-                mode.deferredMove.complete(Game.Coordinates(r, c))
+                mode.moveAction(PlayerMove(r, c))
             }
         }
     }

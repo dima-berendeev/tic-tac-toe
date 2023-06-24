@@ -22,7 +22,7 @@ class GameViewModel : ViewModel() {
             if (mode is Game.Mode.Move && mode.playerType == PlayerType.Nought) {
                 val calculator = OptimalMoveCalculator(gameState.boardSnapshot.createBoard(), mode.playerType)
                 val optimalMove = calculator.findOptimalMove()!!
-                mode.deferredMove.complete(Game.Coordinates(optimalMove.row, optimalMove.column))
+                mode.moveAction(PlayerMove(optimalMove.row, optimalMove.column))
             }
             viewState.value = (ViewState(gameState.boardSnapshot, mode))
         }.launchIn(viewModelScope)

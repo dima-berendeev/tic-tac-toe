@@ -22,10 +22,10 @@ class Game(private val boardProvider: () -> Board) {
                     emit(State(board.getSnapshot(), Mode.Draw))
                 }
                 else -> {
-                    val deferredMove = CompletableDeferred<Coordinates>()
-
-                    emit(State(board.getSnapshot(), Mode.Move(playerType, deferredMove)))
-                    val move = deferredMove.await()
+                    val deferredPlayerMove = CompletableDeferred<PlayerMove>()
+                    val moveAction: (PlayerMove) -> Unit = { coordinates -> deferredPlayerMove.complete(coordinates) }
+                    emit(State(board.getSnapshot(), Mode.Move(playerType, moveAction)))
+                    val move = deferredPlayerMove.await()
 
                     if (board.isEmpty(move.row, move.col)) {
                         board.putCellPlayer(move.row, move.col, playerType)
@@ -42,10 +42,8 @@ class Game(private val boardProvider: () -> Board) {
     )
 
     sealed interface Mode {
-        data class Move(val playerType: PlayerType, val deferredMove: CompletableDeferred<Coordinates>) : Mode
+        data class Move(val playerType: PlayerType, val moveAction: (PlayerMove) -> Unit) : Mode
         data class Win(val player: PlayerType) : Mode
         object Draw : Mode
     }
-
-    data class Coordinates(val row: Int, val col: Int)
 }
