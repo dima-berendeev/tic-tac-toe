@@ -95,7 +95,7 @@ private fun GameHeader(mode: Game.Mode, onRestartClicked: () -> Unit) {
 }
 
 @Composable
-fun GameBoard(board: ImmutableBoard, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
+fun GameBoard(board: BoardSnapshot, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -181,6 +181,6 @@ fun BoardPreview() {
         mutableListOf(null, null, null),
         mutableListOf(PlayerType.Cross, PlayerType.Nought, PlayerType.Cross),
     )
-    val board = MutableBoard(3,content).createImmutableCopy()
+    val board = Board(3, content).getSnapshot()
     GameBoard(board = board) { _, _ -> }
 }

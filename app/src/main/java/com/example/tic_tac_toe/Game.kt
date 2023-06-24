@@ -4,7 +4,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class Game(private val boardProvider: ()->MutableBoard) {
+class Game(private val boardProvider: () -> Board) {
 
     fun launch(): Flow<State> = flow {
         val board = boardProvider()
@@ -15,16 +15,16 @@ class Game(private val boardProvider: ()->MutableBoard) {
             when {
                 board.isWin() -> {
                     winner = playerType.other
-                    emit(State(board.createImmutableCopy(), Mode.Win(winner)))
+                    emit(State(board.getSnapshot(), Mode.Win(winner)))
                 }
                 board.isDraw() -> {
                     isGameDraw = true
-                    emit(State(board.createImmutableCopy(), Mode.Draw))
+                    emit(State(board.getSnapshot(), Mode.Draw))
                 }
                 else -> {
                     val deferredMove = CompletableDeferred<Coordinates>()
 
-                    emit(State(board.createImmutableCopy(), Mode.Move(playerType, deferredMove)))
+                    emit(State(board.getSnapshot(), Mode.Move(playerType, deferredMove)))
                     val move = deferredMove.await()
 
                     if (board.isEmpty(move.row, move.col)) {
@@ -37,7 +37,7 @@ class Game(private val boardProvider: ()->MutableBoard) {
     }
 
     data class State(
-        val boardSnapshot: ImmutableBoard,
+        val boardSnapshot: BoardSnapshot,
         val mode: Mode,
     )
 

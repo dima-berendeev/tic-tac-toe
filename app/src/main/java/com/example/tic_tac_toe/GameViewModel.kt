@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.onEach
 import java.util.UUID
 
 class GameViewModel : ViewModel() {
-    val gameFactory: GameFactory = GameFactory()
     val viewState = MutableStateFlow(ViewState())
+    private val gameFactory: GameFactory = GameFactory()
     private val gameSession = MutableStateFlow<UUID>(UUID.randomUUID())
 
     init {
@@ -20,7 +20,7 @@ class GameViewModel : ViewModel() {
         }.onEach { gameState ->
             val mode = gameState.mode
             if (mode is Game.Mode.Move && mode.playerType == PlayerType.Nought) {
-                val calculator = OptimalMoveCalculator(gameState.boardSnapshot.createMutableCopy(), mode.playerType)
+                val calculator = OptimalMoveCalculator(gameState.boardSnapshot.createBoard(), mode.playerType)
                 val optimalMove = calculator.findOptimalMove()!!
                 mode.deferredMove.complete(Game.Coordinates(optimalMove.row, optimalMove.column))
             }
@@ -35,7 +35,7 @@ class GameViewModel : ViewModel() {
 
 @Immutable
 data class ViewState(
-    val boardSnapshot: ImmutableBoard? = null,
+    val boardSnapshot: BoardSnapshot? = null,
     val mode: Game.Mode? = null
 ) {
     fun isFinished(): Boolean {
@@ -43,8 +43,8 @@ data class ViewState(
     }
 }
 
-class GameFactory() {
+class GameFactory {
     fun get(): Game {
-        return Game { MutableBoard(3) }
+        return Game { Board(3) }
     }
 }

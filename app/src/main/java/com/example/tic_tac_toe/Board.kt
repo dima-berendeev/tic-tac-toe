@@ -2,9 +2,24 @@ package com.example.tic_tac_toe
 
 import androidx.compose.runtime.Immutable
 
-interface Board {
-    val size: Int
-    fun getCellPlayer(row: Int, col: Int): PlayerType?
+class Board(
+    val size: Int,
+    val content: MutableList<MutableList<PlayerType?>> = createContent(size)
+) {
+
+    fun getCellPlayer(row: Int, col: Int): PlayerType? {
+        return content[row][col]
+    }
+
+    fun putCellPlayer(row: Int, col: Int, playerType: PlayerType) {
+        if (content[row][col] != playerType) {
+            content[row][col] = playerType
+        }
+    }
+
+    fun clearCell(row: Int, col: Int) {
+        content[row][col] = null
+    }
 
     fun isEmpty(row: Int, col: Int): Boolean {
         return getCellPlayer(row, col) == null
@@ -55,64 +70,59 @@ interface Board {
         return true
     }
 
+    override fun toString(): String {
+        return "Board(rows=$content)"
+    }
 }
 
+
+fun Board.getSnapshot(): BoardSnapshot {
+    val content: List<List<PlayerType?>> = List(size) { row -> List(size) { col -> getCellPlayer(row, col) } }
+    val size = size
+    return BoardSnapshotImpl(size, content)
+}
+
+interface BoardSnapshot {
+    val size: Int
+    fun getCellPlayer(row: Int, col: Int): PlayerType?
+}
 
 @Immutable
-interface ImmutableBoard : Board
+private class BoardSnapshotImpl constructor(override val size: Int, private val content: List<List<PlayerType?>>) : BoardSnapshot {
 
-interface MutableBoard : Board {
-    fun putCellPlayer(row: Int, col: Int, playerType: PlayerType)
-    fun clearCell(row: Int, col: Int)
-}
+    override fun getCellPlayer(row: Int, col: Int): PlayerType? {
+        return content[row][col]
+    }
 
-fun Board.createImmutableCopy(): ImmutableBoard {
-    val content = List(size) { row -> List(size) { col -> getCellPlayer(row, col) } }
-    val size = size
-    return object : ImmutableBoard {
-        override val size = size
+    override fun toString(): String {
+        return "BoardSnapshot(size=$size, content=$content)"
+    }
 
-        override fun getCellPlayer(row: Int, col: Int): PlayerType? {
-            return content[row][col]
-        }
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
 
+        other as BoardSnapshotImpl
 
-        override fun toString(): String {
-            return "Board(rows=$content)"
-        }
+        if (size != other.size) return false
+        if (content != other.content) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = size
+        result = 31 * result + content.hashCode()
+        return result
     }
 }
 
-fun Board.createMutableCopy(): MutableBoard {
+fun BoardSnapshot.createBoard(): Board {
     val content = MutableList(size) { row -> MutableList(size) { col -> getCellPlayer(row, col) } }
-    return MutableBoard(size, content)
+    return Board(size, content)
 }
 
-fun MutableBoard(
-    size: Int,
-    content: MutableList<MutableList<PlayerType?>> = createMutableEmptyContent(size)
-): MutableBoard {
-    return object : MutableBoard {
-
-        override val size = size
-
-        override fun getCellPlayer(row: Int, col: Int): PlayerType? {
-            return content[row][col]
-        }
-
-        override fun putCellPlayer(row: Int, col: Int, playerType: PlayerType) {
-            if (content[row][col] != playerType) {
-                content[row][col] = playerType
-            }
-        }
-
-        override fun clearCell(row: Int, col: Int) {
-            content[row][col] = null
-        }
-    }
-}
-
-private fun createMutableEmptyContent(size: Int): MutableList<MutableList<PlayerType?>> {
+private fun createContent(size: Int): MutableList<MutableList<PlayerType?>> {
     return MutableList(size) {
         MutableList(size) {
             null

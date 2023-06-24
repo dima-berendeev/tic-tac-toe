@@ -1,6 +1,6 @@
 package com.example.tic_tac_toe
 
-class OptimalMoveCalculator(private val board: MutableBoard, private val player: PlayerType) {
+class OptimalMoveCalculator(private val board: Board, private val player: PlayerType) {
     fun findOptimalMove(): Result? {
         var lastPlayerResult: PlayerResult? = null
         var result: Result? = null
@@ -35,7 +35,7 @@ class OptimalMoveCalculator(private val board: MutableBoard, private val player:
         return mergedResult ?: PlayerResult.Draw
     }
 
-    data class Result(val row: Int,val column: Int)
+    data class Result(val row: Int, val column: Int)
 }
 
 enum class PlayerResult {
