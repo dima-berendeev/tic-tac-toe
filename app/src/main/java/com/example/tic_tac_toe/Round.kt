@@ -4,46 +4,41 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class Game(private val boardProvider: () -> Board) {
+class Round(private val boardProvider: () -> Board) {
 
-    fun launch(): Flow<State> = flow {
+    fun launch(firstMove: PlayerType): Flow<State> = flow {
         val board = boardProvider()
-        var playerType = PlayerType.Cross
+        var playerType = firstMove
         var winner: PlayerType? = null
         var isGameDraw = false
         while (winner == null && !isGameDraw) {
             when {
                 board.isWin() -> {
-                    winner = playerType.other
-                    emit(State(board.getSnapshot(), Mode.Win(winner)))
+                    winner = playerType.anouther
+                    emit(Finished(board.getSnapshot(), winner))
                 }
                 board.isDraw() -> {
                     isGameDraw = true
-                    emit(State(board.getSnapshot(), Mode.Draw))
+                    emit(Finished(board.getSnapshot(), null))
                 }
                 else -> {
                     val deferredPlayerMove = CompletableDeferred<PlayerMove>()
                     val moveAction: (PlayerMove) -> Unit = { coordinates -> deferredPlayerMove.complete(coordinates) }
-                    emit(State(board.getSnapshot(), Mode.Move(playerType, moveAction)))
+                    emit(Move(board.getSnapshot(), playerType, moveAction))
                     val move = deferredPlayerMove.await()
-
                     if (board.isEmpty(move.row, move.col)) {
                         board.putCellPlayer(move.row, move.col, playerType)
-                        playerType = playerType.other
+                        playerType = playerType.anouther
                     }
                 }
             }
         }
     }
 
-    data class State(
-        val boardSnapshot: BoardSnapshot,
-        val mode: Mode,
-    )
-
-    sealed interface Mode {
-        data class Move(val playerType: PlayerType, val moveAction: (PlayerMove) -> Unit) : Mode
-        data class Win(val playerType: PlayerType) : Mode
-        object Draw : Mode
+    sealed interface State {
+        val boardSnapshot: BoardSnapshot
     }
+
+    data class Move(override val boardSnapshot: BoardSnapshot, val playerType: PlayerType, val moveAction: (PlayerMove) -> Unit) : State
+    data class Finished(override val boardSnapshot: BoardSnapshot, val playerType: PlayerType?) : State
 }

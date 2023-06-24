@@ -43,7 +43,7 @@ fun GameScreen() {
         val alpha = if (state.mode is ViewState.Finished) 0.5f else 1f
         GameBoard(board, modifier = Modifier.alpha(alpha)) { r, c ->
             if (mode is ViewState.RealPlayerMove) {
-                mode.playerMoveAction(PlayerMove(r,c))
+                mode.playerMoveAction(PlayerMove(r, c))
             }
         }
     }
@@ -60,35 +60,21 @@ private fun GameHeader(mode: ViewState.Mode) {
     ) {
         when (mode) {
             is ViewState.AutoPlayerMove -> {
-                when (mode.playerType) {
-                    PlayerType.Cross -> {
-                        Text(text = "Turn of Cross", style = MaterialTheme.typography.h4)
-                    }
-                    PlayerType.Nought -> {
-                        Text(text = "Turn of Nought", style = MaterialTheme.typography.h4)
-                    }
-                }
+                Text(text = "Computer's move", style = MaterialTheme.typography.h4)
             }
             is ViewState.RealPlayerMove -> {
-                when (mode.playerType) {
-                    PlayerType.Cross -> {
-                        Text(text = "Turn of Cross", style = MaterialTheme.typography.h4)
-                    }
-                    PlayerType.Nought -> {
-                        Text(text = "Turn of Nought", style = MaterialTheme.typography.h4)
-                    }
-                }
+                Text(text = "Your move", style = MaterialTheme.typography.h4)
             }
             is ViewState.Finished -> {
-                when(mode.playerType){
+                when (mode.playerType) {
                     PlayerType.Cross -> Text(text = "Cross won", style = MaterialTheme.typography.h4)
                     PlayerType.Nought -> Text(text = "Nought won", style = MaterialTheme.typography.h4)
                     null -> Text(text = "Draw", style = MaterialTheme.typography.h4)
                 }
                 Button(
-                    onClick = { mode.restartAction() }
+                    onClick = { mode.nextRoundAction() }
                 ) {
-                    Text(text = "Restart", style = MaterialTheme.typography.button)
+                    Text(text = "Next round", style = MaterialTheme.typography.button)
                 }
             }
         }

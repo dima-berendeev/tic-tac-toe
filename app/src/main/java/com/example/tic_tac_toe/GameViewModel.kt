@@ -7,7 +7,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class GameViewModel : ViewModel() {
     val viewState = MutableStateFlow(ViewState())
@@ -21,36 +20,35 @@ class GameViewModel : ViewModel() {
     }
 
     private suspend fun launchMainCycle() {
+        var firstMove = PlayerType.Nought
         repeat(5) {
-            val gameFlow = gameFactory.get().launch()
+            val gameFlow = gameFactory.get().launch(firstMove)
+            firstMove = firstMove.anouther
             var boardSnapshot: BoardSnapshot? = null
             var playerWon: PlayerType? = null
-            gameFlow.collect { gameState ->
-                boardSnapshot = gameState.boardSnapshot
-                val viewStateMode = when (gameState.mode) {
-                    is Game.Mode.Move -> {
-                        if (gameState.mode.playerType == autoPlayer) {
-                            ViewState.AutoPlayerMove(gameState.mode.playerType)
+            gameFlow.collect { round ->
+                boardSnapshot = round.boardSnapshot
+                val viewStateMode = when (round) {
+                    is Round.Move -> {
+                        if (round.playerType == autoPlayer) {
+                            ViewState.AutoPlayerMove(round.playerType)
                         } else {
-                            val playerMoveAction: (PlayerMove) -> Unit = { playerMove -> gameState.mode.moveAction(playerMove) }
-                            ViewState.RealPlayerMove(gameState.mode.playerType, playerMoveAction)
+                            val playerMoveAction: (PlayerMove) -> Unit = { playerMove -> round.moveAction(playerMove) }
+                            ViewState.RealPlayerMove(round.playerType, playerMoveAction)
                         }
                     }
-                    is Game.Mode.Draw -> {
-                        ViewState.Finished(null, {})
-                    }
-                    is Game.Mode.Win -> {
-                        playerWon = gameState.mode.playerType
-                        ViewState.Finished(gameState.mode.playerType, {})
+                    is Round.Finished -> {
+                        playerWon = round.playerType
+                        ViewState.Finished(round.playerType, {})
                     }
                 }
                 viewState.value = (ViewState(boardSnapshot, viewStateMode))
 
-                if (gameState.mode is Game.Mode.Move && gameState.mode.playerType == autoPlayer) {
-                    val calculator = OptimalMoveCalculator(gameState.boardSnapshot.createBoard(), gameState.mode.playerType)
+                if (round is Round.Move && round.playerType == autoPlayer) {
+                    val calculator = OptimalMoveCalculator(round.boardSnapshot.createBoard(), round.playerType)
                     delay(2000)
                     val optimalMove = calculator.findOptimalMove()!!
-                    gameState.mode.moveAction(PlayerMove(optimalMove.row, optimalMove.column))
+                    round.moveAction(PlayerMove(optimalMove.row, optimalMove.column))
                 }
             }
             val awaitDeferred = CompletableDeferred<Unit>()
@@ -69,11 +67,11 @@ data class ViewState(
     sealed interface Mode
     data class AutoPlayerMove(val playerType: PlayerType) : Mode
     data class RealPlayerMove(val playerType: PlayerType, val playerMoveAction: (PlayerMove) -> Unit) : Mode
-    data class Finished(val playerType: PlayerType?, val restartAction: () -> Unit) : Mode
+    data class Finished(val playerType: PlayerType?, val nextRoundAction: () -> Unit) : Mode
 }
 
 class GameFactory {
-    fun get(): Game {
-        return Game { Board(3) }
+    fun get(): Round {
+        return Round { Board(3) }
     }
 }

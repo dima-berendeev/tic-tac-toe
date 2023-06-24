@@ -8,7 +8,7 @@ class OptimalMoveCalculator(private val board: Board, private val player: Player
             for (c in 0 until board.size) {
                 if (!board.isEmpty(r, c)) continue
                 board.putCellPlayer(r, c, player)
-                val playerResult = !find(player.other)
+                val playerResult = !find(player.anouther)
                 if (lastPlayerResult == null || playerResult < lastPlayerResult) {
                     lastPlayerResult = playerResult
                     result = Result(r, c)
@@ -28,7 +28,7 @@ class OptimalMoveCalculator(private val board: Board, private val player: Player
             for (c in 0 until board.size) {
                 if (!board.isEmpty(r, c)) continue
                 board.putCellPlayer(r, c, player)
-                mergedResult = mergedResult.best(!find(player.other))
+                mergedResult = mergedResult.best(!find(player.anouther))
                 board.clearCell(r, c)
             }
         }
