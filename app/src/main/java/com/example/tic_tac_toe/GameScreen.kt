@@ -1,6 +1,10 @@
 package com.example.tic_tac_toe
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,12 +22,9 @@ import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -116,16 +117,28 @@ fun GameBoard(board: UiBoard, modifier: Modifier = Modifier, onElementClick: (c:
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun GameCell(cellState: UiBoard.Cell, modifier: Modifier = Modifier) {
     Box(modifier) {
-        when (cellState) {
-            UiBoard.Cell.Cross -> Cross(Modifier.fillMaxSize())
-            UiBoard.Cell.Empty -> {}
-            UiBoard.Cell.Nought -> Nought(Modifier.fillMaxSize())
-            UiBoard.Cell.PossibleDraw -> Possible(Modifier.fillMaxSize(), Color.Gray)
-            UiBoard.Cell.PossibleLoss -> Possible(Modifier.fillMaxSize(), Color.Black)
-            UiBoard.Cell.PossibleWin -> Possible(Modifier.fillMaxSize(), Color.Magenta)
+        AnimatedContent(
+            targetState = cellState,
+            transitionSpec = { scaleIn() with scaleOut() }) { contentState ->
+            when (contentState) {
+                UiBoard.Cell.Cross -> Cross(Modifier.fillMaxSize())
+                UiBoard.Cell.Empty -> {
+                    Box(modifier.fillMaxSize())
+                }
+                UiBoard.Cell.Nought -> Nought(Modifier.fillMaxSize())
+                is UiBoard.Cell.Possible -> {
+                    val color = when (contentState.playerRoundResult) {
+                        PlayerRoundResult.Win -> Color.Magenta
+                        PlayerRoundResult.Draw -> Color.Gray
+                        PlayerRoundResult.Loss -> Color.Black
+                    }
+                    Possible(Modifier.fillMaxSize(), color)
+                }
+            }
         }
     }
 }
@@ -168,19 +181,10 @@ private fun Nought(modifier: Modifier = Modifier) {
 
 @Composable
 private fun Possible(modifier: Modifier = Modifier, color: Color) {
-    var visible by remember {
-        mutableStateOf(false)
-    }
-
-    val value by animateFloatAsState(if (visible) 1f else 0f)
-
-    LaunchedEffect(key1 = Unit) {
-        visible = true
-    }
     Canvas(modifier = modifier) {
         inset(size.width / 5) {
             val size: Float = size.width
-            drawCircle(color = color, radius = value * size / 4f, style = Fill)
+            drawCircle(color = color, radius = size / 4f, style = Fill)
         }
     }
 }

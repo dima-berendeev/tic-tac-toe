@@ -2,6 +2,11 @@ package com.example.tic_tac_toe
 
 import androidx.compose.runtime.Immutable
 
+enum class PlayerRoundResult {
+    Win, Draw, Loss;
+}
+
+
 class Board(
     val size: Int,
     val content: MutableList<MutableList<PlayerType?>> = createContent(size)
@@ -81,7 +86,6 @@ fun Board.getSnapshot(): BoardSnapshot {
     val size = size
     return BoardSnapshotImpl(size, content)
 }
-
 
 
 @Immutable

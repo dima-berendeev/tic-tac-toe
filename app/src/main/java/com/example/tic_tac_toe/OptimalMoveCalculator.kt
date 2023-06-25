@@ -42,10 +42,6 @@ class OptimalMoveCalculator(private val board: Board, private val player: Player
     data class Result(val optimalMove: PlayerMove?, val allMoves: List<List<PlayerRoundResult?>>)
 }
 
-enum class PlayerRoundResult {
-    Win, Draw, Loss;
-}
-
 private operator fun PlayerRoundResult.not(): PlayerRoundResult {
     return when (this) {
         PlayerRoundResult.Win -> PlayerRoundResult.Loss

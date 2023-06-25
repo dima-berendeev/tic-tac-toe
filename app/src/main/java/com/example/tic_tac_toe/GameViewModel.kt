@@ -93,11 +93,7 @@ class GameViewModel : ViewModel() {
         for (row in 0..2) {
             for (col in 0..2) {
                 val playerRoundResult = allMoves[row][col] ?: continue
-                mutableUiBoard[row][col] = when (playerRoundResult) {
-                    PlayerRoundResult.Win -> UiBoard.Cell.PossibleWin
-                    PlayerRoundResult.Draw -> UiBoard.Cell.PossibleDraw
-                    PlayerRoundResult.Loss -> UiBoard.Cell.PossibleLoss
-                }
+                mutableUiBoard[row][col] = UiBoard.Cell.Possible(playerRoundResult)
                 emit(UiBoardImpl(3, makeUiBoardCopy()))
             }
         }
@@ -118,9 +114,7 @@ interface UiBoard {
         object Empty : Cell
         object Cross : Cell
         object Nought : Cell
-        object PossibleLoss : Cell
-        object PossibleWin : Cell
-        object PossibleDraw : Cell
+        data class Possible(val playerRoundResult: PlayerRoundResult) : Cell
     }
 }
 
