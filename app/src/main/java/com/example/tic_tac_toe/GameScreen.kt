@@ -1,5 +1,6 @@
 package com.example.tic_tac_toe
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,18 +18,21 @@ import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -38,7 +42,7 @@ fun GameScreen() {
     val vm: GameViewModel = viewModel()
     val state by vm.viewState.collectAsState()
     val mode = state.roundState ?: return
-    val board = state.boardSnapshot ?: return
+    val board = state.uiBoard ?: return
     Column {
         GameHeader(mode)
         val alpha = if (state.roundState is RoundUiState.Finished) 0.5f else 1f
@@ -84,7 +88,7 @@ private fun GameHeader(roundState: RoundUiState) {
 }
 
 @Composable
-fun GameBoard(board: BoardSnapshot, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
+fun GameBoard(board: UiBoard, modifier: Modifier = Modifier, onElementClick: (c: Int, r: Int) -> Unit) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -95,7 +99,7 @@ fun GameBoard(board: BoardSnapshot, modifier: Modifier = Modifier, onElementClic
             Row {
                 for (c in 0..2) {
                     GameCell(
-                        board.getCellPlayer(r, c),
+                        board.getCell(r, c),
                         modifier = Modifier
                             .fillMaxWidth(1f / (3 - c))
                             .aspectRatio(1f)
@@ -113,15 +117,15 @@ fun GameBoard(board: BoardSnapshot, modifier: Modifier = Modifier, onElementClic
 }
 
 @Composable
-fun GameCell(cellState: PlayerType?, modifier: Modifier = Modifier) {
+fun GameCell(cellState: UiBoard.Cell, modifier: Modifier = Modifier) {
     Box(modifier) {
         when (cellState) {
-
-            PlayerType.Cross -> Cross(Modifier.fillMaxSize())
-            PlayerType.Nought -> Nought(Modifier.fillMaxSize())
-            null -> {
-                //do nothing
-            }
+            UiBoard.Cell.Cross -> Cross(Modifier.fillMaxSize())
+            UiBoard.Cell.Empty -> {}
+            UiBoard.Cell.Nought -> Nought(Modifier.fillMaxSize())
+            UiBoard.Cell.PossibleDraw -> Possible(Modifier.fillMaxSize(), Color.Gray)
+            UiBoard.Cell.PossibleLoss -> Possible(Modifier.fillMaxSize(), Color.Black)
+            UiBoard.Cell.PossibleWin -> Possible(Modifier.fillMaxSize(), Color.Magenta)
         }
     }
 }
@@ -162,14 +166,33 @@ private fun Nought(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
 @Composable
-fun BoardPreview() {
-    val content: MutableList<MutableList<PlayerType?>> = mutableListOf(
-        mutableListOf(PlayerType.Cross, PlayerType.Nought, null),
-        mutableListOf(null, null, null),
-        mutableListOf(PlayerType.Cross, PlayerType.Nought, PlayerType.Cross),
-    )
-    val board = Board(3, content).getSnapshot()
-    GameBoard(board = board) { _, _ -> }
+private fun Possible(modifier: Modifier = Modifier, color: Color) {
+    var visible by remember {
+        mutableStateOf(false)
+    }
+
+    val value by animateFloatAsState(if (visible) 1f else 0f)
+
+    LaunchedEffect(key1 = Unit) {
+        visible = true
+    }
+    Canvas(modifier = modifier) {
+        inset(size.width / 5) {
+            val size: Float = size.width
+            drawCircle(color = color, radius = value * size / 4f, style = Fill)
+        }
+    }
 }
+
+//@Preview
+//@Composable
+//fun BoardPreview() {
+//    val content: MutableList<MutableList<PlayerType?>> = mutableListOf(
+//        mutableListOf(PlayerType.Cross, PlayerType.Nought, null),
+//        mutableListOf(null, null, null),
+//        mutableListOf(PlayerType.Cross, PlayerType.Nought, PlayerType.Cross),
+//    )
+//    val board = Board(3, content).getSnapshot()
+//    GameBoard(board = board) { _, _ -> }
+//}

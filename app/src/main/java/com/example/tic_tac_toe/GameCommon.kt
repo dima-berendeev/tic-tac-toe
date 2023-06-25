@@ -8,7 +8,7 @@ enum class PlayerType {
     Cross, Nought
 }
 
-val PlayerType.anouther
+val PlayerType.another
     get() = when (this) {
         PlayerType.Cross -> PlayerType.Nought
         PlayerType.Nought -> PlayerType.Cross

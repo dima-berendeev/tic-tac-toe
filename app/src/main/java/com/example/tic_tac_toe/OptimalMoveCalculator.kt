@@ -1,56 +1,60 @@
 package com.example.tic_tac_toe
 
 class OptimalMoveCalculator(private val board: Board, private val player: PlayerType) {
-    fun findOptimalMove(): Result? {
-        var lastPlayerResult: PlayerResult? = null
-        var result: Result? = null
+    fun findOptimalMove(): Result {
+        val allMoves = MutableList(board.size) {
+            MutableList<PlayerRoundResult?>(board.size) { null }
+        }
+        var lastPlayerRoundResult: PlayerRoundResult? = null
+        var bestMove: PlayerMove? = null
         for (r in 0 until board.size) {
             for (c in 0 until board.size) {
                 if (!board.isEmpty(r, c)) continue
                 board.putCellPlayer(r, c, player)
-                val playerResult = !find(player.anouther)
-                if (lastPlayerResult == null || playerResult < lastPlayerResult) {
-                    lastPlayerResult = playerResult
-                    result = Result(r, c)
+                val playerResult = !find(player.another)
+                allMoves[r][c] = playerResult
+                if (lastPlayerRoundResult == null || playerResult < lastPlayerRoundResult) {
+                    lastPlayerRoundResult = playerResult
+                    bestMove = PlayerMove(r, c)
                 }
                 board.clearCell(r, c)
             }
         }
-        return result
+        return Result(bestMove, allMoves)
     }
 
-    private fun find(player: PlayerType): PlayerResult {
+    private fun find(player: PlayerType): PlayerRoundResult {
         if (board.isWin()) {
-            return PlayerResult.Loss
+            return PlayerRoundResult.Loss
         }
-        var mergedResult: PlayerResult? = null
+        var mergedResult: PlayerRoundResult? = null
         for (r in 0 until board.size) {
             for (c in 0 until board.size) {
                 if (!board.isEmpty(r, c)) continue
                 board.putCellPlayer(r, c, player)
-                mergedResult = mergedResult.best(!find(player.anouther))
+                mergedResult = mergedResult.best(!find(player.another))
                 board.clearCell(r, c)
             }
         }
-        return mergedResult ?: PlayerResult.Draw
+        return mergedResult ?: PlayerRoundResult.Draw
     }
 
-    data class Result(val row: Int, val column: Int)
+    data class Result(val optimalMove: PlayerMove?, val allMoves: List<List<PlayerRoundResult?>>)
 }
 
-private enum class PlayerResult {
+enum class PlayerRoundResult {
     Win, Draw, Loss;
 }
 
-private operator fun PlayerResult.not(): PlayerResult {
+private operator fun PlayerRoundResult.not(): PlayerRoundResult {
     return when (this) {
-        PlayerResult.Win -> PlayerResult.Loss
-        PlayerResult.Draw -> PlayerResult.Draw
-        PlayerResult.Loss -> PlayerResult.Win
+        PlayerRoundResult.Win -> PlayerRoundResult.Loss
+        PlayerRoundResult.Draw -> PlayerRoundResult.Draw
+        PlayerRoundResult.Loss -> PlayerRoundResult.Win
     }
 }
 
-private fun PlayerResult?.best(other: PlayerResult): PlayerResult {
+private fun PlayerRoundResult?.best(other: PlayerRoundResult): PlayerRoundResult {
     return if (this == null || other < this) {
         other
     } else {

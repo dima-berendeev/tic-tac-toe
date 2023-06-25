@@ -14,7 +14,7 @@ class Round(private val boardProvider: () -> Board) {
         while (winner == null && !isGameDraw) {
             when {
                 board.isWin() -> {
-                    winner = playerType.anouther
+                    winner = playerType.another
                     emit(Finished(board.getSnapshot(), winner))
                 }
                 board.isDraw() -> {
@@ -28,7 +28,7 @@ class Round(private val boardProvider: () -> Board) {
                     val move = deferredPlayerMove.await()
                     if (board.isEmpty(move.row, move.col)) {
                         board.putCellPlayer(move.row, move.col, playerType)
-                        playerType = playerType.anouther
+                        playerType = playerType.another
                     }
                 }
             }
