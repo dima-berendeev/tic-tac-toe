@@ -25,7 +25,7 @@ class GameViewModel : ViewModel() {
 
     private suspend fun launchMainCycle() {
         var firstMove = PlayerType.Nought
-        repeat(5) {
+        repeat(100) {
             val gameFlow = gameFactory.get().launch(firstMove)
             firstMove = firstMove.another
             var boardSnapshot: BoardSnapshot? = null
@@ -86,10 +86,7 @@ class GameViewModel : ViewModel() {
         allMoves: List<List<PlayerRoundResult?>>
     ): Flow<UiBoard> = flow {
         val mutableUiBoard = boardSnapshot.toUiBoardContent()
-
         fun makeUiBoardCopy() = List(3) { row -> List(3) { col -> mutableUiBoard[row][col] } }
-
-
         for (row in 0..2) {
             for (col in 0..2) {
                 val playerRoundResult = allMoves[row][col] ?: continue
