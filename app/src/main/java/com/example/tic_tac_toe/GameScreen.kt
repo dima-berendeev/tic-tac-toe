@@ -1,5 +1,6 @@
 package com.example.tic_tac_toe
 
+import android.content.res.Resources.Theme
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.scaleIn
@@ -11,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,9 +21,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,6 +38,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -44,6 +49,7 @@ fun GameScreen() {
     val state by vm.viewState.collectAsState()
     val mode = state.roundState ?: return
     val board = state.uiBoard ?: return
+    val score = state.scoreUiScore ?: return
     Column {
         GameHeader(mode)
         val alpha = if (state.roundState is RoundUiState.Finished) 0.5f else 1f
@@ -51,6 +57,18 @@ fun GameScreen() {
             if (mode is RoundUiState.RealPlayerMove) {
                 mode.playerMoveAction(PlayerMove(r, c))
             }
+        }
+        Score(score)
+    }
+}
+
+@Composable
+fun ColumnScope.Score(score:UiScore) {
+    Row(modifier = Modifier.align(Alignment.CenterHorizontally).padding(24.dp)) {
+        CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.h1.copy(fontWeight = FontWeight.ExtraBold)) {
+            Text(text = score.cross.toString())
+            Text(text = " : ")
+            Text(text = score.nought.toString())
         }
     }
 }

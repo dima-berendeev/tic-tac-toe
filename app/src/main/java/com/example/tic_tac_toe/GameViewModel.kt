@@ -25,17 +25,23 @@ class GameViewModel : ViewModel() {
 
     private suspend fun launchMainCycle() {
         var firstMove = PlayerType.Nought
-        repeat(100) {
+        var crossScore = 0
+        var noughtScore = 0
+        while(true) {
             val gameFlow = gameFactory.get().launch(firstMove)
             firstMove = firstMove.another
-            var boardSnapshot: BoardSnapshot? = null
+            var uiBoard: UiBoard? = null
             var playerWon: PlayerType? = null
+            fun updateRound(roundUiState: RoundUiState){
+                viewState.value = UiState(uiBoard, UiScore(cross = crossScore, nought = noughtScore),roundUiState)
+            }
             gameFlow.collect { round ->
-                boardSnapshot = round.boardSnapshot
+                uiBoard = round.boardSnapshot.toUiBoardContent().let { UiBoardImpl(3, it) }
+
                 when (round) {
                     is Round.Move -> {
-                        val uiBoard = UiBoardImpl(3, round.boardSnapshot.toUiBoardContent())
-                        viewState.value = UiState(uiBoard, RoundUiState.AutoPlayerMove(round.playerType, 1f))
+
+                        updateRound( RoundUiState.AutoPlayerMove(round.playerType, 1f))
                         if (round.playerType == autoPlayer) {
 
                             val calculator = withContext(Dispatchers.Default) {
@@ -46,27 +52,35 @@ class GameViewModel : ViewModel() {
 
                             // show all variants
                             getAllMovesFlow(round.boardSnapshot, calculatorResult.allMoves).collect { uiBoardWithForecast ->
-                                viewState.value = UiState(uiBoardWithForecast, RoundUiState.AutoPlayerMove(round.playerType, 1f))
-                                delay(150)
+                                uiBoard = uiBoardWithForecast
+                                updateRound( RoundUiState.AutoPlayerMove(round.playerType, 1f))
+                                delay(20)
                             }
-                            delay(100)
+                            delay(1000)
 
                             round.moveAction(calculatorResult.optimalMove!!)
                         } else {
                             val playerMoveAction: (PlayerMove) -> Unit = { playerMove -> round.moveAction(playerMove) }
                             val roundUiState = RoundUiState.RealPlayerMove(round.playerType, playerMoveAction)
-                            viewState.value = UiState(uiBoard, roundUiState)
+                            updateRound(roundUiState)
                         }
                     }
                     is Round.Finished -> {
                         playerWon = round.playerType
+                        when(playerWon){
+                            PlayerType.Cross -> crossScore++
+                            PlayerType.Nought -> noughtScore++
+                            null -> {
+                                crossScore++
+                                noughtScore++
+                            }
+                        }
                         return@collect
                     }
                 }
             }
             val awaitDeferred = CompletableDeferred<Unit>()
-            val uiBoard = boardSnapshot?.toUiBoardContent()?.let { UiBoardImpl(3, it) }
-            viewState.value = UiState(uiBoard, RoundUiState.Finished(playerWon, { awaitDeferred.complete(Unit) }))
+            updateRound(RoundUiState.Finished(playerWon, { awaitDeferred.complete(Unit) }))
             awaitDeferred.await()
         }
     }
@@ -100,8 +114,11 @@ class GameViewModel : ViewModel() {
 @Immutable
 data class UiState(
     val uiBoard: UiBoard? = null,
+    val scoreUiScore:UiScore? = null,
     val roundState: RoundUiState? = null
 )
+
+data class UiScore(val cross:Int, val nought:Int)
 
 @Immutable
 interface UiBoard {
@@ -129,6 +146,6 @@ sealed interface RoundUiState {
 
 class GameFactory {
     fun get(): Round {
-        return Round { Board(3) }
+        return Round { Board(size = 3) }
     }
 }
